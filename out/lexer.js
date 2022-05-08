@@ -218,7 +218,6 @@ class Lexer {
      * @returns a tuple with tokens and boolean indicating an error
      */
     processCode(code) {
-        // TODO: get rid of paths
         return this.tokenize(code);
     }
 }

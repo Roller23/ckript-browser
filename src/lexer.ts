@@ -220,7 +220,6 @@ export class Lexer {
    */
 
   public processCode(code: string): Token[] {
-    // TODO: get rid of paths
     return this.tokenize(code);
   }
 
