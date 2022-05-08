@@ -140,7 +140,6 @@ class Statement {
         this.indexes = [];
         this.objMembers = [];
         this.line = 0;
-        this.source = '';
         if (arg instanceof ClassStatement) {
             this.type = StmtType.CLASS;
             this.classStmt = arg;

@@ -72,14 +72,12 @@ var TokenType;
 })(TokenType = exports.TokenType || (exports.TokenType = {}));
 ;
 class Token {
-    constructor(_type, _value, _source, _line) {
+    constructor(_type, _value, _line) {
         this.type = TokenType.NONE;
         this.value = '';
-        this.source = '';
         this.line = 0;
         this.type = _type;
         this.value = _value;
-        this.source = _source;
         this.line = _line;
     }
     getKeyName() {
@@ -101,7 +99,7 @@ class Token {
         return Token.nameLUT[type];
     }
     static getDefault() {
-        return new Token(TokenType.NONE, '', '', 0);
+        return new Token(TokenType.NONE, '', 0);
     }
 }
 exports.Token = Token;

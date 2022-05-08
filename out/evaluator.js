@@ -59,13 +59,12 @@ class Evaluator {
         this.returnsRef = false;
         this.nestedLoops = 0;
         this.currentLine = 0;
-        this.currentSource = '';
         this.returnValue = null;
         this.VM = VM;
         this.AST = AST;
     }
     throwError(cause) {
-        error_handler_1.ErrorHandler.throwError(`Runtime error: ${cause} (${this.currentSource}:${this.currentLine})`);
+        error_handler_1.ErrorHandler.throwError(`Runtime error: ${cause} (line ${this.currentLine})`);
     }
     getHeapVal(ref) {
         if (ref < 0 || ref >= this.VM.heap.chunks.length) {
@@ -651,7 +650,7 @@ class Evaluator {
                     break;
                 callArgs.push(this.evaluateExpression(nodeList, needsRef));
             }
-            this.VM.trace.push(fn.value.referenceName, this.currentLine, this.currentSource);
+            this.VM.trace.push(fn.value.referenceName, this.currentLine);
             const returnVal = this.VM.globals[fn.value.referenceName].execute(callArgs, this);
             this.VM.trace.pop();
             return Evaluator.RpnVal(returnVal);
@@ -756,7 +755,7 @@ class Evaluator {
             });
         }
         const fnName = fn.value.isLvalue() ? fn.value.referenceName : fnValue.funcName;
-        this.VM.trace.push(fnName, this.currentLine, this.currentSource);
+        this.VM.trace.push(fnName, this.currentLine);
         this.VM.activeEvaluators.push(funcEvaluator);
         funcEvaluator.start();
         this.VM.activeEvaluators.pop();
@@ -793,7 +792,6 @@ class Evaluator {
     executeStatement(statement) {
         const stmt = statement.obj;
         this.currentLine = stmt.line;
-        this.currentSource = stmt.source;
         if (stmt.type === ast_1.StmtType.NONE) {
             return Evaluator.FLAG_OK;
         }

@@ -95,10 +95,9 @@ class Heap {
 }
 exports.Heap = Heap;
 class Call {
-    constructor(line, name, source) {
+    constructor(line, name) {
         this.line = line;
         this.name = name;
-        this.source = source;
     }
 }
 exports.Call = Call;
@@ -106,8 +105,8 @@ class StackTrace {
     constructor() {
         this.stack = [];
     }
-    push(name, line, source) {
-        this.stack.push(new Call(line, name, source));
+    push(name, line) {
+        this.stack.push(new Call(line, name));
     }
     pop() {
         this.stack.pop();
@@ -645,9 +644,6 @@ class NativeStacktrace {
             }
             const name = !crumb.name ? '<anonymous function>' : `function '${crumb.name}'`;
             process.stdout.write(`  in ${name} called on line ${crumb.line}`);
-            if (crumb.source) {
-                process.stdout.write(` in file ${crumb.source}`);
-            }
             process.stdout.write('\n');
             printed++;
         }

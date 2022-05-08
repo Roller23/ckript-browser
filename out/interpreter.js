@@ -8,12 +8,8 @@ const token_1 = require("./token");
 const utils_1 = require("./utils");
 const vm_1 = require("./vm");
 class Interpreter {
-    processFile(filename, args = []) {
-        const [tokens, err] = new lexer_1.Lexer().processFile(filename);
-        if (err) {
-            console.log(`Couldn't open file ${filename}`);
-            process.exit(1);
-        }
+    processCode(code, args = []) {
+        const tokens = new lexer_1.Lexer().processCode(code);
         const [AST] = new parser_1.Parser(tokens, token_1.TokenType.NONE).parse();
         const evaluator = new evaluator_1.Evaluator(AST, new vm_1.CVM());
         const val = (evaluator.stack.argv = new vm_1.Variable()).val;

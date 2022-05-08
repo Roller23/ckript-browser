@@ -1,22 +1,14 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Lexer = void 0;
 const token_1 = require("./token");
 const error_handler_1 = require("./error-handler");
-const fs_1 = require("fs");
-const path_1 = __importDefault(require("path"));
 class Lexer {
     constructor() {
         this.tokens = [];
         this.deletedSpaces = 0;
         this.prevDeletedSpaces = 0;
         this.currentLine = 1;
-        this.baseDir = '';
-        this.baseName = '';
-        this.fullPath = '';
         this.ptr = 0;
         this.end = 0;
         this.code = '';
@@ -34,7 +26,7 @@ class Lexer {
         return /\d/.test(char);
     }
     throwError(cause) {
-        error_handler_1.ErrorHandler.throwError(`Token error: ${cause} (${this.baseName}:${this.currentLine})`);
+        error_handler_1.ErrorHandler.throwError(`Token error: ${cause} (line ${this.currentLine})`);
     }
     consumeWhitespace() {
         while (this.ptr !== this.end && Lexer.isWhitespace(this.code[this.ptr])) {
@@ -44,7 +36,7 @@ class Lexer {
         }
     }
     addToken(type, value) {
-        this.tokens.push(new token_1.Token(type, value, this.baseName, this.currentLine));
+        this.tokens.push(new token_1.Token(type, value, this.currentLine));
     }
     tokenize(code) {
         this.ptr = 0;
@@ -67,25 +59,7 @@ class Lexer {
                         tokenString += this.code[this.ptr];
                     }
                     this.ptr--;
-                    if (tokenString === 'include') {
-                        this.ptr++;
-                        this.consumeWhitespace();
-                        c = this.code[this.ptr];
-                        if (!(c === '"' || c === "'" || c === '`') || this.ptr === this.end || this.ptr + 1 === this.end) {
-                            this.throwError('Expected a string literal after include');
-                        }
-                        this.ptr++;
-                        let path = `${this.baseDir}/`;
-                        while (this.code[this.ptr] !== c && this.ptr !== this.end) {
-                            path += this.code[this.ptr++];
-                        }
-                        const [toks, err] = new Lexer().processFile(path);
-                        if (err) {
-                            this.throwError(`Couldn't include file ${path}`);
-                        }
-                        this.tokens.push(...toks);
-                    }
-                    else if (Lexer.allowedTokenKeys.includes(tokenString)) {
+                    if (Lexer.allowedTokenKeys.includes(tokenString)) {
                         const strTokenType = token_1.TokenType[tokenString.toUpperCase()];
                         this.addToken(strTokenType, '');
                     }
@@ -243,15 +217,9 @@ class Lexer {
      * @param filename input file
      * @returns a tuple with tokens and boolean indicating an error
      */
-    processFile(filename) {
-        if (!fs_1.existsSync(filename)) {
-            return [[], true];
-        }
-        this.fullPath = path_1.default.resolve(filename);
-        this.baseName = path_1.default.basename(this.fullPath);
-        this.baseDir = path_1.default.dirname(this.fullPath);
-        const toks = this.tokenize(fs_1.readFileSync(filename, { encoding: 'utf-8' }));
-        return [toks, false];
+    processCode(code) {
+        // TODO: get rid of paths
+        return this.tokenize(code);
     }
 }
 exports.Lexer = Lexer;
