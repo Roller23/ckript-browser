@@ -63,7 +63,6 @@ export class Evaluator {
   private returnsRef: boolean = false;
   private nestedLoops: number = 0;
   private currentLine: number = 0;
-  private currentSource: string = '';
   private returnValue: Value | null = null;
 
   constructor(AST: Node, VM: CVM) {
@@ -72,7 +71,7 @@ export class Evaluator {
   }
 
   public throwError(cause: string) {
-    ErrorHandler.throwError(`Runtime error: ${cause} (${this.currentSource}:${this.currentLine})`);
+    ErrorHandler.throwError(`Runtime error: ${cause} (line ${this.currentLine})`);
   }
 
   private getHeapVal(ref: number): Value {
@@ -678,7 +677,7 @@ export class Evaluator {
         if (nodeList.length === 0) break;
         callArgs.push(this.evaluateExpression(nodeList, needsRef));
       }
-      this.VM.trace.push(fn.value.referenceName, this.currentLine, this.currentSource);
+      this.VM.trace.push(fn.value.referenceName, this.currentLine);
       const returnVal: Value = this.VM.globals[fn.value.referenceName].execute(callArgs, this);
       this.VM.trace.pop();
       return Evaluator.RpnVal(returnVal);
@@ -778,7 +777,7 @@ export class Evaluator {
       });
     }
     const fnName: string = fn.value.isLvalue() ? fn.value.referenceName : fnValue.funcName;
-    this.VM.trace.push(fnName, this.currentLine, this.currentSource);
+    this.VM.trace.push(fnName, this.currentLine);
     this.VM.activeEvaluators.push(funcEvaluator);
     funcEvaluator.start();
     this.VM.activeEvaluators.pop();
@@ -816,7 +815,6 @@ export class Evaluator {
   private executeStatement(statement: Node): number {
     const stmt: Statement = statement.obj as Statement;
     this.currentLine = stmt.line;
-    this.currentSource = stmt.source;
     if (stmt.type === StmtType.NONE) {
       return Evaluator.FLAG_OK;
     } else if (stmt.type === StmtType.EXPR) {

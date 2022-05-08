@@ -98,7 +98,6 @@ export class Statement {
   public classStmt: ClassStatement | null;
   public objMembers: string[] = [];
   public line: number = 0;
-  public source: string = '';
 
   public constructor(arg: StmtType | ClassStatement) {
     if (arg instanceof ClassStatement) {

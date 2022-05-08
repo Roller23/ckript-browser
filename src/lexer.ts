@@ -1,16 +1,11 @@
 import {Token, TokenType} from './token'
 import {ErrorHandler} from './error-handler'
-import { existsSync, readFileSync } from 'fs';
-import path from 'path';
 
 export class Lexer {
   private tokens: Token[] = [];
   private deletedSpaces: number = 0;
   private prevDeletedSpaces: number = 0;
   private currentLine: number = 1;
-  private baseDir: string = '';
-  private baseName: string = '';
-  private fullPath: string = '';
   private ptr: number = 0;
   private end: number = 0;
   private code: string = '';
@@ -58,7 +53,7 @@ export class Lexer {
   }
 
   private throwError(cause: string): void {
-    ErrorHandler.throwError(`Token error: ${cause} (${this.baseName}:${this.currentLine})`);
+    ErrorHandler.throwError(`Token error: ${cause} (line ${this.currentLine})`);
   }
 
   private consumeWhitespace(): void {
@@ -69,7 +64,7 @@ export class Lexer {
   }
 
   private addToken(type: TokenType, value: string): void {
-    this.tokens.push(new Token(type, value, this.baseName, this.currentLine));
+    this.tokens.push(new Token(type, value, this.currentLine));
   }
 
   tokenize(code: string): Token[] {
@@ -91,24 +86,7 @@ export class Lexer {
             tokenString += this.code[this.ptr];
           }
           this.ptr--;
-          if (tokenString === 'include') {
-            this.ptr++;
-            this.consumeWhitespace();
-            c = this.code[this.ptr];
-            if (!(c === '"' || c === "'" || c === '`') || this.ptr === this.end || this.ptr + 1 === this.end) {
-              this.throwError('Expected a string literal after include');
-            }
-            this.ptr++;
-            let path: string = `${this.baseDir}/`;
-            while (this.code[this.ptr] !== c && this.ptr !== this.end) {
-              path += this.code[this.ptr++];
-            }
-            const [toks, err] = new Lexer().processFile(path);
-            if (err) {
-              this.throwError(`Couldn't include file ${path}`);
-            }
-            this.tokens.push(...toks);
-          } else if (Lexer.allowedTokenKeys.includes(tokenString)) {
+          if (Lexer.allowedTokenKeys.includes(tokenString)) {
             const strTokenType: TokenType = TokenType[tokenString.toUpperCase() as keyof typeof TokenType];
             this.addToken(strTokenType, '');
           } else {
@@ -241,15 +219,9 @@ export class Lexer {
    * @returns a tuple with tokens and boolean indicating an error
    */
 
-  public processFile(filename: string): [Token[], boolean] {
-    if (!existsSync(filename)) {
-      return [[], true];
-    }
-    this.fullPath = path.resolve(filename);
-    this.baseName = path.basename(this.fullPath);
-    this.baseDir = path.dirname(this.fullPath);
-    const toks: Token[] = this.tokenize(readFileSync(filename, {encoding: 'utf-8'}));
-    return [toks, false];
+  public processCode(code: string): Token[] {
+    // TODO: get rid of paths
+    return this.tokenize(code);
   }
 
 }

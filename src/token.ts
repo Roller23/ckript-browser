@@ -34,7 +34,6 @@ export enum TokenType {
 export class Token {
   public type: TokenType = TokenType.NONE;
   public value: string = '';
-  public source: string = '';
   public line: number = 0;
 
   public getKeyName(): string {
@@ -129,13 +128,12 @@ export class Token {
   }
 
   public static getDefault(): Token {
-    return new Token(TokenType.NONE, '', '', 0);
+    return new Token(TokenType.NONE, '', 0);
   }
 
-  public constructor(_type: TokenType, _value: string, _source: string, _line: number) {
+  public constructor(_type: TokenType, _value: string, _line: number) {
     this.type = _type;
     this.value = _value;
-    this.source = _source;
     this.line = _line;
   }
 }

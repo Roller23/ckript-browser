@@ -102,20 +102,18 @@ export class Heap {
 export class Call {
   public line: number;
   public name: string;
-  public source: string;
 
-  constructor(line: number, name: string, source: string) {
+  constructor(line: number, name: string) {
     this.line = line;
     this.name = name;
-    this.source = source;
   }
 }
 
 export class StackTrace {
   public stack: Call[] = [];
 
-  public push(name: string, line: number, source: string) {
-    this.stack.push(new Call(line, name, source));
+  public push(name: string, line: number) {
+    this.stack.push(new Call(line, name));
   }
 
   public pop(): void {
@@ -664,9 +662,6 @@ class NativeStacktrace implements NativeFunction {
       }
       const name: string = !crumb.name ? '<anonymous function>' : `function '${crumb.name}'`;
       process.stdout.write(`  in ${name} called on line ${crumb.line}`);
-      if (crumb.source) {
-        process.stdout.write(` in file ${crumb.source}`);
-      }
       process.stdout.write('\n');
       printed++;
     }

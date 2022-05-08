@@ -7,12 +7,8 @@ import { CVM, Value, Variable } from "./vm";
 
 export class Interpreter {
 
-  public processFile(filename: string, args: string[] = []): void {
-    const [tokens, err] = new Lexer().processFile(filename);
-    if (err) {
-      console.log(`Couldn't open file ${filename}`);
-      process.exit(1);
-    }
+  public processCode(code: string, args: string[] = []): void {
+    const tokens = new Lexer().processCode(code);
     const [AST] = new Parser(tokens, TokenType.NONE).parse();
     const evaluator: Evaluator = new Evaluator(AST, new CVM());
     const val: Value = (evaluator.stack.argv = new Variable()).val;

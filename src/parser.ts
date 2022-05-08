@@ -12,7 +12,7 @@ export class Parser {
   private terminal: TokenType;
 
   private throwError(cause: string, token: Token): void {
-    ErrorHandler.throwError(`Syntax error: ${cause} (${token.line}:${token.source})`);
+    ErrorHandler.throwError(`Syntax error: ${cause} (line ${token.line})`);
   }
 
   private failIfEOF(expected: TokenType): void {
@@ -76,7 +76,6 @@ export class Parser {
     let classExpr: Node = new Node(new Statement(new ClassStatement()));
     let stmt = classExpr.toStmt();
     stmt.line = this.currToken.line;
-    stmt.source = this.currToken.source;
     this.advance(); // skip the class
     if (this.currToken.type !== TokenType.IDENTIFIER) {
       this.throwError(`invalid class declaration, expected an identifier, but ${this.currToken.getName()} found`, this.currToken);
@@ -105,7 +104,6 @@ export class Parser {
       let set: Node = new Node(new Statement(StmtType.SET));
       let stmt = set.toStmt();
       stmt.line = this.currToken.line;
-      stmt.source = this.currToken.source;
       this.advance(); // skip the $
       if (this.currToken.type != TokenType.IDENTIFIER) {
         this.throwError(`invalid set statement. Expected an identifier, but ${this.currToken.getName()} found`, this.currToken);
@@ -132,7 +130,6 @@ export class Parser {
       let setIdx: Node = new Node(new Statement(StmtType.SET_IDX));
       let stmt = setIdx.toStmt();
       stmt.line = this.currToken.line;
-      stmt.source = this.currToken.source;
       this.advance(); // skip the #
       if (this.currToken.type !== TokenType.IDENTIFIER) {
         this.throwError(`invalid set index statement. Expected an identifier, but ${this.currToken.getName()} found`, this.currToken);
@@ -154,7 +151,6 @@ export class Parser {
     } else if (this.currToken.type === TokenType.LEFT_BRACE) {
       let comp: Node = new Node(new Statement(StmtType.COMPOUND));
       let stmt = comp.toStmt();
-      stmt.source = this.currToken.source;
       stmt.line = this.currToken.line;
       this.advance(); // skip the {
       const blockEnd: number = this.findEnclosingBrace(this.pos, 1);
@@ -167,7 +163,6 @@ export class Parser {
       return comp;
     } else if (this.currToken.type === TokenType.IF) {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       this.advance(); // skip the if
       if (this.currToken.type !== TokenType.LEFT_PAREN) {
         this.throwError(`invalid if statement. Expected '(' but ${this.currToken.getName()} found`, this.currToken);
@@ -175,7 +170,6 @@ export class Parser {
       let ifStmt: Node = new Node(new Statement(StmtType.IF));
       let stmt = ifStmt.toStmt();
       stmt.line = line;
-      stmt.source = source;
       this.advance(); // skip the (
       stmt.expressions.push(this.getExpression(TokenType.RIGHT_PAREN));
       this.advance(); // skip the )
@@ -187,7 +181,6 @@ export class Parser {
       return ifStmt;
     } else if (this.currToken.type === TokenType.WHILE) {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       this.advance(); // skip the while
       if (this.currToken.type !== TokenType.LEFT_PAREN) {
         this.throwError(`invalid while statement. Expected '(' but ${this.currToken.getName()} found`, this.currToken);
@@ -195,7 +188,6 @@ export class Parser {
       let whileStmt: Node = new Node(new Statement(StmtType.WHILE));
       let stmt = whileStmt.toStmt();
       stmt.line = line;
-      stmt.source = source;
       this.advance(); // skip the (
       stmt.expressions.push(this.getExpression(TokenType.RIGHT_PAREN));
       this.advance(); // skip the )
@@ -203,7 +195,6 @@ export class Parser {
       return whileStmt;
     } else if (this.currToken.type === TokenType.FOR) {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       this.advance(); // skip the for
       if (this.currToken.type !== TokenType.LEFT_PAREN) {
         this.throwError(`invalid for statement. Expected '(' but ${this.currToken.getName()} found`, this.currToken);
@@ -211,7 +202,6 @@ export class Parser {
       let forStmt: Node = new Node(new Statement(StmtType.FOR));
       let stmt = forStmt.toStmt();
       stmt.line = line;
-      stmt.source = source;
       this.advance(); // skip the (
       stmt.expressions = this.getManyExpressions(TokenType.SEMI_COLON, TokenType.RIGHT_PAREN);
       this.advance(); // skip the )
@@ -221,14 +211,12 @@ export class Parser {
       let returnStmt: Node = new Node(new Statement(StmtType.RETURN));
       let stmt = returnStmt.toStmt();
       stmt.line = this.currToken.line;
-      stmt.source = this.currToken.source;
       this.advance(); // skip the return
       stmt.expressions.push(this.getExpression(TokenType.SEMI_COLON));
       this.advance(); // skip the semicolon
       return returnStmt;
     } else if (this.currToken.type === TokenType.BREAK) {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       this.advance(); // skip the break
       if (this.currToken.type !== TokenType.SEMI_COLON) {
         this.throwError(`invalid break statement. Expected ';' but ${this.currToken.getName()} found`, this.currToken);
@@ -237,11 +225,9 @@ export class Parser {
       let continueStmt: Node = new Node(new Statement(StmtType.BREAK));
       let stmt = continueStmt.toStmt();
       stmt.line = line;
-      stmt.source = source;
       return continueStmt;
     } else if (this.currToken.type === TokenType.CONTINUE) {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       this.advance(); // skip the continue
       if (this.currToken.type !== TokenType.SEMI_COLON) {
         this.throwError(`invalid continue statement. Expected ';' but ${this.currToken.getName()} found`, this.currToken);
@@ -250,14 +236,12 @@ export class Parser {
       let continueStmt: Node = new Node(new Statement(StmtType.CONTINUE));
       let stmt = continueStmt.toStmt();
       stmt.line = line;
-      stmt.source = source;
       return continueStmt;
     } else if (this.currToken.type === TokenType.TYPE) {
       if (this.currToken.value === 'void') {
         this.throwError(`invalid variable declaration. Cannot declare a void variable`, this.currToken);
       }
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       const allocated: boolean = this.prev.type === TokenType.ALLOC;
       let constant: boolean = this.prev.type === TokenType.CONST;
       const reference: boolean = this.prev.type === TokenType.REF;
@@ -285,7 +269,6 @@ export class Parser {
       let stmt = declStmt.toStmt();
       stmt.statements.push(varDecl);
       stmt.line = line;
-      stmt.source = source;
       this.advance(); // skip the semicolon
       return declStmt;
     } else if (this.currToken.type === TokenType.ALLOC) {
@@ -310,20 +293,17 @@ export class Parser {
       let nopStmt: Node = new Node(new Statement(StmtType.NOP));
       let stmt = nopStmt.toStmt();
       stmt.line = this.currToken.line;
-      stmt.source = this.currToken.source;
       this.advance(); // skip the ;
       return nopStmt;
     } else if (this.currToken.type === this.terminal) {
       return prev;
     } else {
       const line: number = this.currToken.line;
-      const source: string = this.currToken.source;
       let expr: Node[] = this.getExpression(TokenType.SEMI_COLON);
       let exprStmt: Node = new Node(new Statement(StmtType.EXPR));
       let stmt = exprStmt.toStmt();
       stmt.expressions.push(expr);
       stmt.line = line;
-      stmt.source = source;
       this.advance(); // skip the ;
       return exprStmt;
     }
