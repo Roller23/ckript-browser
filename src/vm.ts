@@ -1,7 +1,6 @@
 import { VarType } from "./utils"
 import { FuncExpression, FuncParam, LiteralValue } from './ast'
 import { Evaluator } from "./evaluator";
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 
 export class Value {
   public type: VarType = VarType.UNKNOWN;
@@ -126,7 +125,6 @@ export class CVM {
   public trace: StackTrace = new StackTrace();
   public activeEvaluators: Evaluator[] = [];
   public globals: {[key: string]: NativeFunction} = {
-    print: new NativePrint(),
     println: new NativePrintln(),
     input: new NativeInput(),
     sizeof: new NativeSizeof(),
@@ -135,10 +133,6 @@ export class CVM {
     exit: new NativeExit(),
     timestamp: new NativeTimestamp(),
     pow: new NativePow(),
-    file_read: new NativeFileread(),
-    file_write: new NativeFilewrite(),
-    file_exists: new NativeFileexists(),
-    file_remove: new NativeFileremove(),
     abs: new NativeAbs(),
     rand: new NativeRand(),
     contains: new NativeContains(),
@@ -315,20 +309,6 @@ export class CVM {
   }
 }
 
-class NativePrint implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length === 0) {
-      ev.throwError('print expects at least one argument (any, any...)');
-    }
-    let i: number = 0;
-    const endIndex: number = args.length - 1;
-    for (const arg of args) {
-      process.stdout.write(`${ev.VM.stringify(arg)}${i !== endIndex ? ' ' : ''}`);
-    }
-    return new Value(VarType.VOID);
-  }
-}
-
 class NativePrintln implements NativeFunction {
   public execute(args: Value[], ev: Evaluator): Value {
     if (args.length === 0) {
@@ -336,10 +316,12 @@ class NativePrintln implements NativeFunction {
     }
     let i: number = 0;
     const endIndex: number = args.length - 1;
+    let output: string = '';
     for (const arg of args) {
-      process.stdout.write(`${ev.VM.stringify(arg)}${i !== endIndex ? ' ' : ''}`);
+      output += `${ev.VM.stringify(arg)}${i !== endIndex ? ' ' : ''}`;
     }
-    process.stdout.write('\n');
+    // TODO: hook up a print event listener
+    console.log(output);
     return new Value(VarType.VOID);
   }
 }
@@ -414,7 +396,8 @@ class NativeExit implements NativeFunction {
     if (args.length !== 1 || !args[0].isInteger()) {
       ev.throwError(`exit expects one argument (integer)`);
     }
-    process.exit(<number>args[0].value);
+    // TODO: throw a different kind of error
+    throw new Error(`Exited with status code ${args[0].value}`);
   }
 }
 
@@ -435,58 +418,6 @@ class NativePow implements NativeFunction {
     const arg1: number = <number>args[0].value;
     const arg2: number = <number>args[1].value;
     return new Value(VarType.NUM, Math.pow(arg1, arg2));
-  }
-}
-
-class NativeFileread implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length !== 1 || args[0].type !== VarType.STR) {
-      ev.throwError(`file_read expects one argument (str)`);
-    }
-    const path: string = <string>args[0].value;
-    if (!existsSync(path)) {
-      ev.throwError(`Couldn't read ${path}`);
-    }
-    return new Value(VarType.STR, readFileSync(path, {encoding: 'utf8'}));
-  }
-}
-
-class NativeFilewrite implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length !== 2 || args[0].type !== VarType.STR || args[1].type !== VarType.STR) {
-      ev.throwError(`file_write expects two arguments (str, str)`);
-    }
-    const path: string = <string>args[0].value;
-    try {
-      writeFileSync(path, <string>args[1].value, {encoding: 'utf8', flag: 'w'});
-      return new Value(VarType.BOOL, true);
-    } catch (e) {
-      return new Value(VarType.BOOL, false);
-    }
-  }
-}
-
-class NativeFileexists implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length !== 1 || args[0].type !== VarType.STR) {
-      ev.throwError(`file_exists(str) expects one argument`);
-    }
-    const path: string = <string>args[0].value;
-    return new Value(VarType.BOOL, existsSync(path));
-  }
-}
-
-class NativeFileremove implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length !== 1 || args[0].type !== VarType.STR) {
-      ev.throwError(`file_remove expects one argument (str)`);
-    }
-    try {
-      unlinkSync(<string>args[0].value);
-      return new Value(VarType.BOOL, true);
-    } catch (e) {
-      return new Value(VarType.BOOL, false);
-    }
   }
 }
 
@@ -577,7 +508,7 @@ class NativeTobytes implements NativeFunction {
     }
     let res: Value = new Value(VarType.ARR);
     res.arrayType = 'num';
-    const buffer: number[] = [...Buffer.from(<string>args[0].value)];
+    const buffer: number[] = Array.from(new TextEncoder().encode(<string>args[0].value))
     for (const byte of buffer) {
       res.arrayValues.push(new Value(VarType.NUM, byte));
     }
@@ -656,12 +587,13 @@ class NativeStacktrace implements NativeFunction {
     const limit: number = 100;
     let printed: number = 0;
     for (const crumb of ev.VM.trace.stack.reverse()) {
+      let output: string = '';
       if (printed > limit) {
-        process.stdout.write(`    and ${ev.VM.trace.stack.length - printed} more\n`);
+        output += `    and ${ev.VM.trace.stack.length - printed} more\n`;
       }
       const name: string = !crumb.name ? '<anonymous function>' : `function '${crumb.name}'`;
-      process.stdout.write(`  in ${name} called on line ${crumb.line}`);
-      process.stdout.write('\n');
+      output += `  in ${name} called on line ${crumb.line}`;
+      console.log(output);
       printed++;
     }
     ev.VM.trace.stack.reverse();
