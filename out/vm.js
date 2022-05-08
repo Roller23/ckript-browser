@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CVM = exports.StackTrace = exports.Call = exports.Heap = exports.Cache = exports.Chunk = exports.Variable = exports.Value = void 0;
 const utils_1 = require("./utils");
 const fs_1 = require("fs");
-// 3rd party modules from npm
-const readlineSync = require('readline-sync');
 const fetch = require('sync-fetch');
 class Value {
     constructor(type, value) {
@@ -357,7 +355,11 @@ class NativeInput {
             ev.throwError(`input optional argument must be a string`);
         }
         const question = args.length === 1 && args[0].type === utils_1.VarType.STR ? args[0].value : '';
-        return new Value(utils_1.VarType.STR, readlineSync.question(question));
+        let answer = prompt(question, '');
+        if (answer === null) {
+            answer = '';
+        }
+        return new Value(utils_1.VarType.STR, answer);
     }
 }
 class NativeSizeof {

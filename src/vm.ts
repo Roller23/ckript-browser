@@ -3,8 +3,6 @@ import { FuncExpression, FuncParam, LiteralValue } from './ast'
 import { Evaluator } from "./evaluator";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 
-// 3rd party modules from npm
-const readlineSync = require('readline-sync');
 const fetch = require('sync-fetch');
 
 export class Value {
@@ -358,7 +356,11 @@ class NativeInput implements NativeFunction {
       ev.throwError(`input optional argument must be a string`);
     }
     const question = args.length === 1 && args[0].type === VarType.STR ? args[0].value : '';
-    return new Value(VarType.STR, readlineSync.question(question));
+    let answer = prompt(question as string, '');
+    if (answer === null) {
+      answer = '';
+    }
+    return new Value(VarType.STR, answer);
   }
 }
 
