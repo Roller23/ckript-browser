@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CVM = exports.StackTrace = exports.Call = exports.Heap = exports.Cache = exports.Chunk = exports.Variable = exports.Value = void 0;
 const utils_1 = require("./utils");
 const fs_1 = require("fs");
-const fetch = require('sync-fetch');
 class Value {
     constructor(type, value) {
         this.type = utils_1.VarType.UNKNOWN;
@@ -157,7 +156,6 @@ class CVM {
             floor: new NativeFloor(),
             ceil: new NativeCeil(),
             round: new NativeRound(),
-            http: new NativeHttp(),
             same_ref: new NativeSameref()
         };
         this.allocatedChunks = 0;
@@ -651,21 +649,6 @@ class NativeStacktrace {
         }
         ev.VM.trace.stack.reverse();
         return new Value(utils_1.VarType.VOID);
-    }
-}
-class NativeHttp {
-    execute(args, ev) {
-        if (args.length !== 2 || args[0].type !== utils_1.VarType.STR || args[1].type !== utils_1.VarType.STR) {
-            ev.throwError('http expects two arguments (str, str)');
-        }
-        const method = args[0].value.toUpperCase();
-        try {
-            const response = fetch(args[1].value, { method }).text();
-            return new Value(utils_1.VarType.STR, response);
-        }
-        catch (e) {
-            return new Value(utils_1.VarType.STR, '');
-        }
     }
 }
 class NativeSleep {

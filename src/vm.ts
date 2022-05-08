@@ -3,8 +3,6 @@ import { FuncExpression, FuncParam, LiteralValue } from './ast'
 import { Evaluator } from "./evaluator";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 
-const fetch = require('sync-fetch');
-
 export class Value {
   public type: VarType = VarType.UNKNOWN;
   public value: LiteralValue = undefined;
@@ -168,7 +166,6 @@ export class CVM {
     floor: new NativeFloor(),
     ceil: new NativeCeil(),
     round: new NativeRound(),
-    http: new NativeHttp(),
     same_ref: new NativeSameref()
   };
 
@@ -669,21 +666,6 @@ class NativeStacktrace implements NativeFunction {
     }
     ev.VM.trace.stack.reverse();
     return new Value(VarType.VOID);
-  }
-}
-
-class NativeHttp implements NativeFunction {
-  public execute(args: Value[], ev: Evaluator): Value {
-    if (args.length !== 2 || args[0].type !== VarType.STR || args[1].type !== VarType.STR) {
-      ev.throwError('http expects two arguments (str, str)');
-    }
-    const method: string = (<string>args[0].value).toUpperCase();
-    try {
-      const response: string = fetch(args[1].value, {method}).text();
-      return new Value(VarType.STR, response);
-    } catch (e) {
-      return new Value(VarType.STR, '');
-    }
   }
 }
 
