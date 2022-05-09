@@ -1484,6 +1484,7 @@
     class Interpreter {
         constructor() {
             this.cvm = new vm_1.CVM();
+            this.errorListeners = [];
         }
         processCode(code, args = []) {
             const tokens = new lexer_1.Lexer().processCode(code);
@@ -1496,14 +1497,22 @@
                 val.arrayValues.push(new vm_1.Value(utils_1.VarType.STR, args[i]));
             }
             evaluator.VM.activeEvaluators.push(evaluator);
-            evaluator.start();
+            try {
+                evaluator.start();
+            }
+            catch (e) {
+                if (this.errorListeners.length === 0) {
+                    throw e;
+                }
+                this.errorListeners.forEach(listener => listener(e));
+            }
             evaluator.VM.activeEvaluators.pop();
         }
         onOutput(cb) {
             this.cvm.onOutput(cb);
         }
         onError(cb) {
-            this.cvm.onError(cb);
+            this.errorListeners.push(cb);
         }
     }
     exports.Interpreter = Interpreter;
@@ -2825,10 +2834,6 @@
             this.allocatedChunks = 0;
             this.chunksLimit = 5;
             this.outputListeners = [];
-            this.errorListeners = [];
-        }
-        onError(cb) {
-            this.errorListeners.push(cb);
         }
         onOutput(cb) {
             this.outputListeners.push(cb);

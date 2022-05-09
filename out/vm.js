@@ -164,10 +164,6 @@
             this.allocatedChunks = 0;
             this.chunksLimit = 5;
             this.outputListeners = [];
-            this.errorListeners = [];
-        }
-        onError(cb) {
-            this.errorListeners.push(cb);
         }
         onOutput(cb) {
             this.outputListeners.push(cb);

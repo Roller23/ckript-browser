@@ -8,6 +8,7 @@ import { CVM, Value, Variable } from "./vm";
 export class Interpreter {
 
   private readonly cvm: CVM = new CVM();
+  private readonly errorListeners: Function[] = [];
 
   public processCode(code: string, args: string[] = []): void {
     const tokens = new Lexer().processCode(code);
@@ -20,7 +21,14 @@ export class Interpreter {
       val.arrayValues.push(new Value(VarType.STR, args[i]));
     }
     evaluator.VM.activeEvaluators.push(evaluator);
-    evaluator.start();
+    try {
+      evaluator.start();
+    } catch (e) {
+      if (this.errorListeners.length === 0) {
+        throw e;
+      }
+      this.errorListeners.forEach(listener => listener(e));
+    }
     evaluator.VM.activeEvaluators.pop();
   }
 
@@ -29,6 +37,6 @@ export class Interpreter {
   }
 
   public onError(cb: Function) {
-    this.cvm.onError(cb);
+    this.errorListeners.push(cb);
   }
 }

@@ -166,11 +166,6 @@ export class CVM {
   private allocatedChunks: number = 0;
   private chunksLimit: number = 5;
   public readonly outputListeners: Function[] = [];
-  public readonly errorListeners: Function[] = [];
-
-  public onError(cb: Function) {
-    this.errorListeners.push(cb);
-  }
 
   public onOutput(cb: Function) {
     this.outputListeners.push(cb);

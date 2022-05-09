@@ -14,8 +14,14 @@
     interpreter.onOutput(msg => {
       console.log('Ckript output:', msg);
     })
+    interpreter.onError(err => {
+      console.log('Error:', err);
+    })
     console.log(interpreter.processCode(
-      `println("HELLO!");`
+      `
+        println("HELLO!");
+        Error();
+      `
     ))
   </script>
 </body>
