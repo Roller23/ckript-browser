@@ -3,7 +3,7 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser";
 import { TokenType } from "./token";
 import { VarType } from "./utils";
-import { CVM, Value, Variable } from "./vm";
+import { CVM, Exit, Value, Variable } from "./vm";
 
 export class Interpreter {
 
@@ -21,15 +21,24 @@ export class Interpreter {
       val.arrayValues.push(new Value(VarType.STR, args[i]));
     }
     evaluator.VM.activeEvaluators.push(evaluator);
+
+    const clearEvaluators = () => {
+      evaluator.VM.activeEvaluators.splice(0, evaluator.VM.activeEvaluators.length);
+    }
+
     try {
       evaluator.start();
     } catch (e) {
-      if (this.errorListeners.length === 0) {
+      if (e instanceof Exit) {
+        console.log(e.message);
+      } else if (this.errorListeners.length === 0) {
         throw e;
+      } else {
+        this.errorListeners.forEach(listener => listener(e));
       }
-      this.errorListeners.forEach(listener => listener(e));
+      clearEvaluators();
     }
-    evaluator.VM.activeEvaluators.pop();
+    clearEvaluators();
   }
 
   public onOutput(cb: Function) {

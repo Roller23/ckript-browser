@@ -9,8 +9,15 @@
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.CVM = exports.StackTrace = exports.Call = exports.Heap = exports.Cache = exports.Chunk = exports.Variable = exports.Value = void 0;
+    exports.CVM = exports.StackTrace = exports.Call = exports.Heap = exports.Cache = exports.Chunk = exports.Variable = exports.Value = exports.Exit = void 0;
     const utils_1 = require("./utils");
+    class Exit extends Error {
+        constructor(message) {
+            super(message);
+            this.name = 'Exit';
+        }
+    }
+    exports.Exit = Exit;
     class Value {
         constructor(type, value) {
             this.type = utils_1.VarType.UNKNOWN;
@@ -410,8 +417,7 @@
             if (args.length !== 1 || !args[0].isInteger()) {
                 ev.throwError(`exit expects one argument (integer)`);
             }
-            // TODO: throw a different kind of error
-            throw new Error(`Exited with status code ${args[0].value}`);
+            throw new Exit(`Exited with status code ${args[0].value}`);
         }
     }
     class NativeTimestamp {

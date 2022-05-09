@@ -32,16 +32,25 @@
                 val.arrayValues.push(new vm_1.Value(utils_1.VarType.STR, args[i]));
             }
             evaluator.VM.activeEvaluators.push(evaluator);
+            const clearEvaluators = () => {
+                evaluator.VM.activeEvaluators.splice(0, evaluator.VM.activeEvaluators.length);
+            };
             try {
                 evaluator.start();
             }
             catch (e) {
-                if (this.errorListeners.length === 0) {
+                if (e instanceof vm_1.Exit) {
+                    console.log(e.message);
+                }
+                else if (this.errorListeners.length === 0) {
                     throw e;
                 }
-                this.errorListeners.forEach(listener => listener(e));
+                else {
+                    this.errorListeners.forEach(listener => listener(e));
+                }
+                clearEvaluators();
             }
-            evaluator.VM.activeEvaluators.pop();
+            clearEvaluators();
         }
         onOutput(cb) {
             this.cvm.onOutput(cb);

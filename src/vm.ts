@@ -2,6 +2,13 @@ import { VarType } from "./utils"
 import { FuncExpression, FuncParam, LiteralValue } from './ast'
 import { Evaluator } from "./evaluator";
 
+export class Exit extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'Exit';
+  }
+}
+
 export class Value {
   public type: VarType = VarType.UNKNOWN;
   public value: LiteralValue = undefined;
@@ -401,8 +408,7 @@ class NativeExit implements NativeFunction {
     if (args.length !== 1 || !args[0].isInteger()) {
       ev.throwError(`exit expects one argument (integer)`);
     }
-    // TODO: throw a different kind of error
-    throw new Error(`Exited with status code ${args[0].value}`);
+    throw new Exit(`Exited with status code ${args[0].value}`);
   }
 }
 
