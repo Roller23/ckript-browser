@@ -163,6 +163,14 @@
             };
             this.allocatedChunks = 0;
             this.chunksLimit = 5;
+            this.outputListeners = [];
+            this.errorListeners = [];
+        }
+        onError(cb) {
+            this.errorListeners.push(cb);
+        }
+        onOutput(cb) {
+            this.outputListeners.push(cb);
         }
         allocate(value) {
             const chunk = this.heap.allocate(value);
@@ -331,7 +339,7 @@
             for (const arg of args) {
                 output += `${ev.VM.stringify(arg)}${i !== endIndex ? ' ' : ''}`;
             }
-            // TODO: hook up a print event listener
+            ev.VM.outputListeners.forEach(listener => listener(output));
             console.log(output);
             return new Value(utils_1.VarType.VOID);
         }

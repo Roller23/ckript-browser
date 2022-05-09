@@ -165,6 +165,16 @@ export class CVM {
 
   private allocatedChunks: number = 0;
   private chunksLimit: number = 5;
+  public readonly outputListeners: Function[] = [];
+  public readonly errorListeners: Function[] = [];
+
+  public onError(cb: Function) {
+    this.errorListeners.push(cb);
+  }
+
+  public onOutput(cb: Function) {
+    this.outputListeners.push(cb);
+  }
 
   public allocate(value: Value): Chunk {
     const chunk: Chunk = this.heap.allocate(value);
@@ -320,7 +330,7 @@ class NativePrintln implements NativeFunction {
     for (const arg of args) {
       output += `${ev.VM.stringify(arg)}${i !== endIndex ? ' ' : ''}`;
     }
-    // TODO: hook up a print event listener
+    ev.VM.outputListeners.forEach(listener => listener(output));
     console.log(output);
     return new Value(VarType.VOID);
   }

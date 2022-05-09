@@ -10,7 +10,11 @@
   
   <script src="ckript.js"></script>
   <script>
-    console.log(new Interpreter().processCode(
+    const interpreter = new Interpreter();
+    interpreter.onOutput(msg => {
+      console.log('Ckript output:', msg);
+    })
+    console.log(interpreter.processCode(
       `println("HELLO!");`
     ))
   </script>

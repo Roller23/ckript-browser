@@ -17,10 +17,13 @@
     const utils_1 = require("./utils");
     const vm_1 = require("./vm");
     class Interpreter {
+        constructor() {
+            this.cvm = new vm_1.CVM();
+        }
         processCode(code, args = []) {
             const tokens = new lexer_1.Lexer().processCode(code);
             const [AST] = new parser_1.Parser(tokens, token_1.TokenType.NONE).parse();
-            const evaluator = new evaluator_1.Evaluator(AST, new vm_1.CVM());
+            const evaluator = new evaluator_1.Evaluator(AST, this.cvm);
             const val = (evaluator.stack.argv = new vm_1.Variable()).val;
             val.arrayType = 'str';
             val.type = utils_1.VarType.ARR;
@@ -30,6 +33,12 @@
             evaluator.VM.activeEvaluators.push(evaluator);
             evaluator.start();
             evaluator.VM.activeEvaluators.pop();
+        }
+        onOutput(cb) {
+            this.cvm.onOutput(cb);
+        }
+        onError(cb) {
+            this.cvm.onError(cb);
         }
     }
     exports.Interpreter = Interpreter;
