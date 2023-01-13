@@ -1487,8 +1487,21 @@
             this.errorListeners = [];
         }
         processCode(code, args = []) {
-            const tokens = new lexer_1.Lexer().processCode(code);
-            const [AST] = new parser_1.Parser(tokens, token_1.TokenType.NONE).parse();
+            const AST = (() => {
+                try {
+                    const tokens = new lexer_1.Lexer().processCode(code);
+                    const [AST] = new parser_1.Parser(tokens, token_1.TokenType.NONE).parse();
+                    return AST;
+                }
+                catch (e) {
+                    if (this.errorListeners.length === 0)
+                        throw e;
+                    this.errorListeners.forEach(listener => listener(e));
+                    return null;
+                }
+            })();
+            if (AST === null)
+                return;
             const evaluator = new evaluator_1.Evaluator(AST, this.cvm);
             const val = (evaluator.stack.argv = new vm_1.Variable()).val;
             val.arrayType = 'str';

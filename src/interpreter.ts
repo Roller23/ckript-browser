@@ -11,8 +11,18 @@ export class Interpreter {
   private readonly errorListeners: Function[] = [];
 
   public processCode(code: string, args: string[] = []): void {
-    const tokens = new Lexer().processCode(code);
-    const [AST] = new Parser(tokens, TokenType.NONE).parse();
+    const AST = (() => {
+      try {
+        const tokens = new Lexer().processCode(code);
+        const [AST] = new Parser(tokens, TokenType.NONE).parse();
+        return AST;
+      } catch (e) {
+        if (this.errorListeners.length === 0) throw e;
+        this.errorListeners.forEach(listener => listener(e));
+        return null;
+      }
+    })()
+    if (AST === null) return;
     const evaluator: Evaluator = new Evaluator(AST, this.cvm);
     const val: Value = (evaluator.stack.argv = new Variable()).val;
     val.arrayType = 'str';
